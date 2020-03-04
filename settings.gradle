@@ -1,0 +1,3 @@
+rootProject.name = 'radar-spring'
+
+include 'radar-spring-auth'
