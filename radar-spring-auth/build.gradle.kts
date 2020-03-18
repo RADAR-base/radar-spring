@@ -1,11 +1,15 @@
+import org.jetbrains.kotlin.gradle.tasks.throwGradleExceptionIfError
+
 plugins {
     id("kotlin-kapt")
     id("maven-publish")
     id("com.jfrog.bintray") version ("1.8.4")
-    id("com.jfrog.artifactory") version "4.9.1" apply true
+    id("com.jfrog.artifactory") version "4.10.0" apply true
 }
 
 group = "org.radarbase"
+version = parent?.version
+    ?: throwGradleExceptionIfError(org.jetbrains.kotlin.cli.common.ExitCode.SCRIPT_EXECUTION_ERROR)
 description =
     "This library provides functionality to add authorization in any spring based application."
 
@@ -26,8 +30,8 @@ val javaXServletVersion = "2.5"
 dependencies {
     api(group = "org.radarcns", name = "radar-auth", version = mpVersion)
     api(group = "org.slf4j", name = "slf4j-api", version = slf4jVersion)
-    compile(group = "org.springframework", name = "spring-web", version = springVersion)
-    compile(group = "org.springframework", name = "spring-context", version = springVersion)
+    implementation(group = "org.springframework", name = "spring-web", version = springVersion)
+    implementation(group = "org.springframework", name = "spring-context", version = springVersion)
     compileOnly(group = "org.aspectj", name = "aspectjweaver", version = aspectJVersion)
     implementation(group = "javax.servlet", name = "servlet-api", version = javaXServletVersion)
 }
@@ -50,10 +54,6 @@ val dokkaJar by tasks.creating(Jar::class) {
     description = "Assembles Kotlin docs with Dokka"
     classifier = "javadoc"
     from(tasks.dokka)
-}
-
-val wrapper by tasks.creating(Wrapper::class) {
-    gradleVersion = "6.0.1"
 }
 
 // Properties for publishing
@@ -139,8 +139,14 @@ artifactory {
         repository(delegateClosureOf<groovy.lang.GroovyObject> {
             val targetRepoKey = "oss-snapshot-local"
             setProperty("repoKey", targetRepoKey)
-            setProperty("username", project.properties["bintrayUser"] ?: System.getenv("BINTRAY_USER"))
-            setProperty("password", project.properties["bintrayApiKey"] ?: System.getenv("BINTRAY_API"))
+            setProperty(
+                "username",
+                project.properties["bintrayUser"] ?: System.getenv("BINTRAY_USER")
+            )
+            setProperty(
+                "password",
+                project.properties["bintrayApiKey"] ?: System.getenv("BINTRAY_API")
+            )
             setProperty("maven", true)
         })
         defaults(delegateClosureOf<groovy.lang.GroovyObject> {
