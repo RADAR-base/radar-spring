@@ -2,10 +2,10 @@ plugins {
     id("kotlin-kapt")
     id("maven-publish")
     id("com.jfrog.bintray") version ("1.8.4")
+    id("com.jfrog.artifactory") version "4.9.1" apply true
 }
 
 group = "org.radarbase"
-version = "1.0.0-SNAPSHOT"
 description =
     "This library provides functionality to add authorization in any spring based application."
 
@@ -133,8 +133,35 @@ bintray {
     }
 }
 
+artifactory {
+    setContextUrl("https://oss.jfrog.org/artifactory")
+    publish(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
+        repository(delegateClosureOf<groovy.lang.GroovyObject> {
+            val targetRepoKey = "oss-snapshot-local"
+            setProperty("repoKey", targetRepoKey)
+            setProperty("username", project.properties["bintrayUser"] ?: System.getenv("BINTRAY_USER"))
+            setProperty("password", project.properties["bintrayApiKey"] ?: System.getenv("BINTRAY_API"))
+            setProperty("maven", true)
+        })
+        defaults(delegateClosureOf<groovy.lang.GroovyObject> {
+            invokeMethod("publications", "mavenJava")
+        })
+    })
+    resolve(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.ResolverConfig> {
+        setProperty("repoKey", "repo")
+    })
+}
+
+
+tasks.artifactoryPublish {
+    publications("mavenJar")
+}
+
 tasks {
     withType(com.jfrog.bintray.gradle.tasks.BintrayUploadTask::class.java) {
+        dependsOn(assemble)
+    }
+    withType(org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask::class.java) {
         dependsOn(assemble)
     }
 }
