@@ -20,7 +20,7 @@ Since we are using this in spring applications, we can use `spring-aop`. So add 
     dependencies {
         // AOP
         runtimeOnly(group: 'org.springframework', name: 'spring-aop', version: '5.2.4.RELEASE')
-        api(group: 'org.radarbase', name: 'radar-spring-auth', version: '1.0.0-SNAPSHOT')
+        api(group: 'org.radarbase', name: 'radar-spring-auth', version: '1.0.0')
     }
 ```
 
