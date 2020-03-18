@@ -58,7 +58,7 @@ val dokkaJar by tasks.creating(Jar::class) {
 
 // Properties for publishing
 val githubRepoName = "RADAR-base/radar-spring"
-val githubUrl = "https://github.com/${githubRepoName}.git"
+val githubUrl = "https://github.com/${githubRepoName}"
 val website = "https://radar-base.org"
 
 publishing {
@@ -124,7 +124,6 @@ bintray {
         issueTrackerUrl = "$githubUrl/issues"
         vcsUrl = githubUrl
         githubRepo = githubRepoName
-        githubReleaseNotesFile = "README.md"
         with(version) {
             name = project.version as String?
             desc = project.description
@@ -139,6 +138,7 @@ artifactory {
         repository(delegateClosureOf<groovy.lang.GroovyObject> {
             val targetRepoKey = "oss-snapshot-local"
             setProperty("repoKey", targetRepoKey)
+            setProperty("snapshotRepoKey", targetRepoKey)
             setProperty(
                 "username",
                 project.properties["bintrayUser"] ?: System.getenv("BINTRAY_USER")
