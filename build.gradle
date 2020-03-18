@@ -1,20 +1,22 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.3.61' apply(false)
+    id 'org.jetbrains.kotlin.jvm' version '1.3.70' apply(false)
+    id("org.jetbrains.dokka") version "0.10.0"
 }
 
 group 'org.radarbase'
-version '1.0-SNAPSHOT'
+version '1.0.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.70"
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
 
@@ -22,7 +24,7 @@ subprojects {
 
     apply plugin: 'java'
     apply plugin: 'kotlin'
-    version = '1.0.0-SNAPSHOT'
+    apply plugin: 'org.jetbrains.dokka'
 
     repositories {
         // Use jcenter for resolving your dependencies.
@@ -33,6 +35,11 @@ subprojects {
 
     dependencies {
         implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    }
+
+    tasks.dokka {
+        outputFormat = "html"
+        outputDirectory = "$buildDir/javadoc"
     }
 }
 
