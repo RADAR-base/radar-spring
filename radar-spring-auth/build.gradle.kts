@@ -145,7 +145,7 @@ artifactory {
             )
             setProperty(
                 "password",
-                project.properties["bintrayApiKey"] ?: System.getenv("BINTRAY_API")
+                project.properties["bintrayApiKey"] ?: System.getenv("BINTRAY_API_KEY")
             )
             setProperty("maven", true)
         })

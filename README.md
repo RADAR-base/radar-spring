@@ -13,9 +13,15 @@ This library uses AOP (Aspect Oriented Programming) and hence requires an AOP pr
 Since we are using this in spring applications, we can use `spring-aop`. So add the following to your application's `build.gradle` file.
 
 ```groovy
-    // AOP
-    runtimeOnly(group: 'org.springframework', name: 'spring-aop', version: '5.2.4.RELEASE')
-    implementation(group: 'org.radarbase', name: 'radar-spring-auth', version: '1.0.0-SNAPSHOT')
+    repositories {
+        maven { url "https://dl.bintray.com/radar-base/org.radarbase" }
+    }
+    
+    dependencies {
+        // AOP
+        runtimeOnly(group: 'org.springframework', name: 'spring-aop', version: '5.2.4.RELEASE')
+        api(group: 'org.radarbase', name: 'radar-spring-auth', version: '1.0.0-SNAPSHOT')
+    }
 ```
 
 Then we need to add our Authorisation Aspect to the spring context as a bean.
