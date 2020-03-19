@@ -109,9 +109,9 @@ publishing {
 
 bintray {
     user =
-        (project.properties["bintrayUser"] ?: System.getenv("BINTRAY_USER"))?.toString()
+        (System.getenv("BINTRAY_USER") ?: project.properties["bintrayUser"])?.toString()
     key =
-        (project.properties["bintrayApiKey"] ?: System.getenv("BINTRAY_API_KEY"))?.toString()
+        (System.getenv("BINTRAY_API_KEY") ?: project.properties["bintrayApiKey"])?.toString()
     override = false
     setPublications("mavenJar")
     with(pkg) {
@@ -157,7 +157,6 @@ artifactory {
         setProperty("repoKey", "repo")
     })
 }
-
 
 tasks.artifactoryPublish {
     publications("mavenJar")
