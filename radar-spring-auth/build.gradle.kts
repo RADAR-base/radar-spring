@@ -21,7 +21,7 @@ repositories {
 }
 
 // Dependecy versions
-val mpVersion = "0.6.3"
+val mpVersion = "0.6.5"
 val springVersion = "5.2.4.RELEASE"
 val slf4jVersion = "1.7.30"
 val aspectJVersion = "1.9.5"
