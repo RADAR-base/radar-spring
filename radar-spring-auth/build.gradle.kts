@@ -3,8 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.throwGradleExceptionIfError
 plugins {
     id("kotlin-kapt")
     id("maven-publish")
-    id("com.jfrog.bintray") version ("1.8.4")
-    id("com.jfrog.artifactory") version "4.10.0" apply true
+    id("signing")
 }
 
 group = "org.radarbase"
@@ -21,14 +20,14 @@ repositories {
 }
 
 // Dependecy versions
-val mpVersion = "0.6.5"
+val mpVersion = "0.7.1"
 val springVersion = "5.2.4.RELEASE"
 val slf4jVersion = "1.7.30"
 val aspectJVersion = "1.9.5"
 val javaXServletVersion = "2.5"
 
 dependencies {
-    api(group = "org.radarcns", name = "radar-auth", version = mpVersion)
+    api(group = "org.radarbase", name = "radar-auth", version = mpVersion)
     api(group = "org.slf4j", name = "slf4j-api", version = slf4jVersion)
     implementation(group = "org.springframework", name = "spring-web", version = springVersion)
     implementation(group = "org.springframework", name = "spring-context", version = springVersion)
@@ -37,11 +36,15 @@ dependencies {
 }
 
 tasks.compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 tasks.compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 tasks.dokka {
@@ -52,7 +55,7 @@ tasks.dokka {
 val dokkaJar by tasks.creating(Jar::class) {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Assembles Kotlin docs with Dokka"
-    classifier = "javadoc"
+    archiveClassifier.set("javadoc")
     from(tasks.dokka)
 }
 
@@ -100,73 +103,15 @@ publishing {
             }
         }
     }
-    repositories {
-        maven {
-            url = uri("$buildDir/repository")
-        }
-    }
 }
 
-bintray {
-    user =
-        (System.getenv("BINTRAY_USER") ?: project.properties["bintrayUser"])?.toString()
-    key =
-        (System.getenv("BINTRAY_API_KEY") ?: project.properties["bintrayApiKey"])?.toString()
-    override = false
-    setPublications("mavenJar")
-    with(pkg) {
-        repo = project.group as String?
-        name = project.name
-        userOrg = "radar-base"
-        desc = project.description
-        setLicenses("Apache-2.0")
-        websiteUrl = website
-        issueTrackerUrl = "$githubUrl/issues"
-        vcsUrl = githubUrl
-        githubRepo = githubRepoName
-        with(version) {
-            name = project.version as String?
-            desc = project.description
-            vcsTag = System.getenv("TRAVIS_TAG")
-        }
-    }
+signing {
+    useGpgCmd()
+    isRequired = true
+    sign(tasks.jar.get(), tasks["dokkaJar"])
+    sign(publishing.publications["mavenJar"])
 }
 
-artifactory {
-    setContextUrl("https://oss.jfrog.org/artifactory")
-    publish(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
-        repository(delegateClosureOf<groovy.lang.GroovyObject> {
-            val targetRepoKey = "oss-snapshot-local"
-            setProperty("repoKey", targetRepoKey)
-            setProperty("snapshotRepoKey", targetRepoKey)
-            setProperty(
-                "username",
-                project.properties["bintrayUser"] ?: System.getenv("BINTRAY_USER")
-            )
-            setProperty(
-                "password",
-                project.properties["bintrayApiKey"] ?: System.getenv("BINTRAY_API_KEY")
-            )
-            setProperty("maven", true)
-        })
-        defaults(delegateClosureOf<groovy.lang.GroovyObject> {
-            invokeMethod("publications", "mavenJava")
-        })
-    })
-    resolve(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.ResolverConfig> {
-        setProperty("repoKey", "repo")
-    })
-}
-
-tasks.artifactoryPublish {
-    publications("mavenJar")
-}
-
-tasks {
-    withType(com.jfrog.bintray.gradle.tasks.BintrayUploadTask::class.java) {
-        dependsOn(assemble)
-    }
-    withType(org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask::class.java) {
-        dependsOn(assemble)
-    }
+tasks.withType<Sign>().configureEach {
+    onlyIf { gradle.taskGraph.hasTask("${project.path}:publish") }
 }

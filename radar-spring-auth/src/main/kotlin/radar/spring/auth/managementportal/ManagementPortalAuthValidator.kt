@@ -1,10 +1,10 @@
 package radar.spring.auth.managementportal
 
-import org.radarcns.auth.authentication.TokenValidator
-import org.radarcns.auth.config.TokenValidatorConfig
-import org.radarcns.auth.config.TokenVerifierPublicKeyConfig
-import org.radarcns.auth.exception.TokenValidationException
-import org.radarcns.auth.token.RadarToken
+import org.radarbase.auth.authentication.TokenValidator
+import org.radarbase.auth.config.TokenValidatorConfig
+import org.radarbase.auth.config.TokenVerifierPublicKeyConfig
+import org.radarbase.auth.exception.TokenValidationException
+import org.radarbase.auth.token.RadarToken
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
