@@ -1,7 +1,7 @@
 package radar.spring.auth.common
 
-import org.radarcns.auth.exception.TokenValidationException
-import org.radarcns.auth.token.RadarToken
+import org.radarbase.auth.exception.TokenValidationException
+import org.radarbase.auth.token.RadarToken
 import javax.servlet.http.HttpServletRequest
 
 interface RadarAuthValidator : AuthValidator<RadarToken> {

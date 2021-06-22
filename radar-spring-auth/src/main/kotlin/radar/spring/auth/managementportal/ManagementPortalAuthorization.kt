@@ -1,7 +1,7 @@
 package radar.spring.auth.managementportal
 
-import org.radarcns.auth.authorization.Permission
-import org.radarcns.auth.token.RadarToken
+import org.radarbase.auth.authorization.Permission
+import org.radarbase.auth.token.RadarToken
 import org.slf4j.LoggerFactory
 import radar.spring.auth.common.Authorization
 import radar.spring.auth.common.PermissionOn
