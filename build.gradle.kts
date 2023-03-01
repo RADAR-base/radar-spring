@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "org.radarbase"
-version = "1.1.4-SNAPSHOT"
+version = "1.1.5-SNAPSHOT"
 
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 

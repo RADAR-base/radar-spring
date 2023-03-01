@@ -20,7 +20,7 @@ repositories {
 }
 
 // Dependecy versions
-val mpVersion = "0.7.1"
+val mpVersion = "0.8.2"
 val springVersion = "5.2.4.RELEASE"
 val slf4jVersion = "1.7.30"
 val aspectJVersion = "1.9.5"
@@ -52,6 +52,13 @@ tasks.dokka {
     outputDirectory = "$buildDir/javadoc"
 }
 
+val sourcesJar by tasks.creating(Jar::class) {
+    from(tasks.jar)
+    description = "Main source Jar for the application"
+    archiveClassifier.set("sources")
+}
+
+
 val dokkaJar by tasks.creating(Jar::class) {
     group = JavaBasePlugin.DOCUMENTATION_GROUP
     description = "Assembles Kotlin docs with Dokka"
@@ -67,8 +74,10 @@ val website = "https://radar-base.org"
 publishing {
     publications {
         create<MavenPublication>("mavenJar") {
-            from(components["java"])
-            setArtifacts(arrayListOf(dokkaJar, tasks.jar.get()))
+            afterEvaluate {
+                from(components["java"])
+            }
+            setArtifacts(arrayListOf(dokkaJar, sourcesJar))
             pom {
                 name.set(project.name)
                 description.set(project.description)
@@ -108,10 +117,19 @@ publishing {
 signing {
     useGpgCmd()
     isRequired = true
-    sign(tasks.jar.get(), tasks["dokkaJar"])
+    sign(tasks["sourcesJar"], tasks["dokkaJar"])
     sign(publishing.publications["mavenJar"])
 }
 
 tasks.withType<Sign>().configureEach {
     onlyIf { gradle.taskGraph.hasTask("${project.path}:publish") }
+}
+
+tasks.withType<Jar> {
+    manifest {
+        attributes(
+            "Implementation-Title" to project.name,
+            "Implementation-Version" to project.version
+        )
+    }
 }
