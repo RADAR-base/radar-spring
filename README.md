@@ -14,13 +14,13 @@ Since we are using this in spring applications, we can use `spring-aop`. So add 
 
 ```groovy
     repositories {
-        maven { url "https://dl.bintray.com/radar-base/org.radarbase" }
+        mavenCentral()
     }
     
     dependencies {
         // AOP
-        runtimeOnly(group: 'org.springframework', name: 'spring-aop', version: '5.2.4.RELEASE')
-        api(group: 'org.radarbase', name: 'radar-spring-auth', version: '1.0.0')
+        runtimeOnly("org.springframework:spring-aop:6.0.6")
+        api("org.radarbase:radar-spring-auth:1.2.0")
     }
 ```
 
@@ -71,27 +71,26 @@ public class AuthConfig {
 }
 ```
 
-Although, we only need `AuthAspect` as a bean, we declare it's dependencies as a bean too, so they can be reused in the application using `Autowired`.
+Although, we only need `AuthAspect` as a bean, we declare its dependencies as a bean too, so they can be reused in the application using `Autowired`.
 
 Now, we add the `Authorized` annotation to our method that we want to authorize for (these are usually spring `Controller` methods).
 
 ```java
-  @Authorized(permission = "READ", entity = "SUBJECT", permissionOn = PermissionOn.SUBJECT)
-  @GetMapping(
-      "/"
-          + "projects"
-          + "/"
-          + "{projectId}"
-          + "/"
-          + "users"
-          + "/"
-          + "{subjectId}")
-  public ResponseEntity<FcmUserDto> getUsersUsingProjectIdAndSubjectId(
-      @Valid @PathVariable String projectId, @Valid @PathVariable String subjectId) {
-
+@Authorized(permission = "READ", entity = "SUBJECT", permissionOn = PermissionOn.SUBJECT)
+@GetMapping(
+    "/"
+        + "projects"
+        + "/"
+        + "{projectId}"
+        + "/"
+        + "users"
+        + "/"
+        + "{subjectId}")
+public ResponseEntity<FcmUserDto> getUsersUsingProjectIdAndSubjectId(
+        @Valid @PathVariable String projectId, @Valid @PathVariable String subjectId) {
     return ResponseEntity.ok(
         this.userService.getUsersByProjectIdAndSubjectId(projectId, subjectId));
-  }
+}
 ```
 
 Various other conditions to verify can be provided using the `Authorized` annotation. For a full set, take a look at the [annotation class](./radar-spring-auth/src/main/kotlin/radar/spring/auth/common/Authorization.kt)
@@ -112,7 +111,7 @@ The `Authorized` annotation adds a request attribute named `radar_token` (presen
 ```java
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import radar.spring.auth.common.Authorization;
 import radar.spring.auth.common.Authorized;
@@ -131,47 +130,47 @@ import org.springframework.http.ResponseEntity;
 
 @RestController
 public class RadarProjectController {
-  // Your project Service
-  private transient ProjectService projectService;
+    // Your project Service
+    private transient ProjectService projectService;
 
-  private transient Authorization<RadarToken> authorization;
+    private transient Authorization<RadarToken> authorization;
 
-  public RadarProjectController(
-      ProjectService projectService, Optional<Authorization<RadarToken>> authorization) {
-    this.projectService = projectService;
-    this.authorization = authorization.orElse(null);
-  }
-
-
-  @Authorized(permission = "READ", entity = "PROJECT")
-  @GetMapping("/" + "projects")
-  public ResponseEntity<ProjectDtos> getAllProjects(HttpServletRequest request) {
-
-    ProjectDtos projectDtos = this.projectService.getAllProjects();
-    if (authorization != null) {
-      RadarToken token = (RadarToken) request.getAttribute(AuthAspect.TOKEN_KEY);
-      ProjectDtos finalProjectDtos =
-          new ProjectDtos()
-              .setProjects(
-                  projectDtos.getProjects().stream()
-                      .filter(
-                          project ->
-                              authorization.hasPermission(
-                                  token,
-                                  "READ",
-                                  "PROJECT",
-                                  PermissionOn.PROJECT,
-                                  project.getProjectId(),
-                                  null,
-                                  null))
-                      .collect(Collectors.toList()));
-      return ResponseEntity.ok(finalProjectDtos);
-    } else {
-      // If not authorization object if present, means authorization is disabled.
-      // Remember how we added this as a bean initially.
-      return ResponseEntity.ok(projectDtos);
+    public RadarProjectController(
+        ProjectService projectService, Optional<Authorization<RadarToken>> authorization) {
+        this.projectService = projectService;
+        this.authorization = authorization.orElse(null);
     }
-  }
+
+
+    @Authorized(permission = "READ", entity = "PROJECT")
+    @GetMapping("/" + "projects")
+    public ResponseEntity<ProjectDtos> getAllProjects(HttpServletRequest request) {
+
+        ProjectDtos projectDtos = this.projectService.getAllProjects();
+        if (authorization != null) {
+            RadarToken token = (RadarToken) request.getAttribute(AuthAspect.TOKEN_KEY);
+            ProjectDtos finalProjectDtos =
+                new ProjectDtos()
+                    .setProjects(
+                        projectDtos.getProjects().stream()
+                            .filter(
+                                project ->
+                                    authorization.hasPermission(
+                                        token,
+                                        "READ",
+                                        "PROJECT",
+                                        PermissionOn.PROJECT,
+                                        project.getProjectId(),
+                                        null,
+                                        null))
+                            .collect(Collectors.toList()));
+            return ResponseEntity.ok(finalProjectDtos);
+        } else {
+            // If not authorization object if present, means authorization is disabled.
+            // Remember how we added this as a bean initially.
+            return ResponseEntity.ok(projectDtos);
+        }
+    }
 }
 ```
 
@@ -181,24 +180,21 @@ public class RadarProjectController {
 The various parts of the application can be extended as required. Take a look at [AuthValidator](./radar-spring-auth/src/main/kotlin/radar/spring/auth/common/AuthValidator.kt) and [Authorization](./radar-spring-auth/src/main/kotlin/radar/spring/auth/common/Authorization.kt) interfaces which can be used to implement a new authorization. These can then be used to instantiate the `AuthAspect` to enable them.
 You can also add another Aspect as per your requirements in your own project and add it as a Bean in spring to start using it just like the `AuthAspect` from this library.
 
-
 The [required parameter](#parameters-required) names can also be changed as per your requirements apart from the default ones mentioned above. You can even specify multiple names as an array. These will need to be added when creating the `AuthAspect`. For example,
 
 ```java
-...
-  @Bean
-  AuthAspect getAuthAspect(
-      @Autowired ManagementPortalAuthValidator authValidator,
-      @Autowired ManagementPortalAuthorization authorization) {
+@Bean
+AuthAspect getAuthAspect(
+        @Autowired ManagementPortalAuthValidator authValidator,
+        @Autowired ManagementPortalAuthorization authorization) {
     return new AuthAspect<>(
       authValidator,
       authorization, 
-      new String[]{"projectId", "projectName", "project"},
-      new String[]{"subjectId", "login"}, 
-      new String[]{"sourceId", "source"}
+      Set.of("projectId", "projectName", "project"),
+      Set.of("subjectId", "login"), 
+      Set.of("sourceId", "source")
     );
-  }
-...
+}
 ```
 
 But Note that while you can modify the name of the parameters according to you liking, their type must always be `String`.
