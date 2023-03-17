@@ -17,7 +17,7 @@ class ManagementPortalAuthorization : Authorization<RadarToken> {
         user: String?,
         source: String?
     ): Boolean {
-        val mpPermission = Permission(
+        val mpPermission = Permission.of(
             Permission.Entity.valueOf(entity),
             Permission.Operation.valueOf(permission)
         )
@@ -43,7 +43,9 @@ class ManagementPortalAuthorization : Authorization<RadarToken> {
             logger.warn("Project must be specified when checking a role.")
             return false
         }
-        return token.roles.getOrDefault(project, emptyList()).contains(role)
+        return token.roles.asSequence()
+            .filter { it.referent == project }
+            .any { it.authority == role }
     }
 
     override fun hasScopes(token: RadarToken, scopes: Array<String>): Boolean {
