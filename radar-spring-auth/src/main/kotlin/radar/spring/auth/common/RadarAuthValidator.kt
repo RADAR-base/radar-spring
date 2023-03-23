@@ -1,8 +1,8 @@
 package radar.spring.auth.common
 
+import jakarta.servlet.http.HttpServletRequest
 import org.radarbase.auth.exception.TokenValidationException
 import org.radarbase.auth.token.RadarToken
-import javax.servlet.http.HttpServletRequest
 
 interface RadarAuthValidator : AuthValidator<RadarToken> {
 
@@ -13,11 +13,11 @@ interface RadarAuthValidator : AuthValidator<RadarToken> {
         val authorizationHeader = request.getHeader("Authorization")
 
         // Check if the HTTP Authorization header is present and formatted correctly
-        if (authorizationHeader != null
-            && authorizationHeader.startsWith(BEARER, ignoreCase = true)
+        if (authorizationHeader != null &&
+            authorizationHeader.startsWith(BEARER, ignoreCase = true)
         ) {
             // Extract the token from the HTTP Authorization header
-            return authorizationHeader.substring(BEARER.length).trim { it <= ' ' }
+            return authorizationHeader.substring(BEARER.length).trim()
         }
 
         // Extract the token from the Authorization cookie

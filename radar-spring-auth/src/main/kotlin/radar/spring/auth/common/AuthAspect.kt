@@ -1,5 +1,6 @@
 package radar.spring.auth.common
 
+import jakarta.servlet.http.HttpServletRequest
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
@@ -9,21 +10,18 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
 import radar.spring.auth.exception.AuthorizationFailedException
 import radar.spring.auth.exception.ResourceForbiddenException
-import javax.servlet.http.HttpServletRequest
-
 
 @Aspect
 open class AuthAspect<T> @JvmOverloads constructor(
     private val authValidator: AuthValidator<T>,
     private val authorization: Authorization<T>,
-    val projectIdParamNames: Array<String> = arrayOf(PROJECT_ID_PARAMETER_NAME),
-    val subjectIdParamNames: Array<String> = arrayOf(SUBJECT_ID_PARAMETER_NAME),
-    val sourceIdParamNames: Array<String> = arrayOf(SOURCE_ID_PARAMETER_NAME)
+    val projectIdParamNames: Set<String> = setOf(PROJECT_ID_PARAMETER_NAME),
+    val subjectIdParamNames: Set<String> = setOf(SUBJECT_ID_PARAMETER_NAME),
+    val sourceIdParamNames: Set<String> = setOf(SOURCE_ID_PARAMETER_NAME)
 ) {
 
     @Before("@annotation(authorized) && execution(* *(..))")
     fun before(joinPoint: JoinPoint, authorized: Authorized) {
-
         // Get request from current spring context
         val reqAttr = RequestContextHolder.getRequestAttributes()
         val req = (reqAttr as ServletRequestAttributes).request
@@ -48,8 +46,11 @@ open class AuthAspect<T> @JvmOverloads constructor(
     }
 
     fun authorize(
-        authorized: Authorized, request: HttpServletRequest, projectId:
-        String?, subjectId: String?, sourceId: String?
+        authorized: Authorized,
+        request: HttpServletRequest,
+        projectId: String?,
+        subjectId: String?,
+        sourceId: String?
     ) {
         logger.debug("Authorizing request...")
         val token = ensureToken(request)
@@ -85,8 +86,7 @@ open class AuthAspect<T> @JvmOverloads constructor(
                 request.requestURI
             )
             throw AuthorizationFailedException(
-                "The token is missing from the request. No bearer " +
-                        "token provided in the request"
+                "The token is missing from the request. No bearer token provided in the request"
             )
         }
         val token: T? = try {
@@ -97,7 +97,8 @@ open class AuthAspect<T> @JvmOverloads constructor(
         } catch (exc: Exception) {
             logger.warn("[401] {}: {}", request.requestURI, exc.toString())
             throw AuthorizationFailedException(
-                "Cannot verify token. It may have been rendered invalid.", exc
+                "Cannot verify token. It may have been rendered invalid.",
+                exc
             )
         }
 

@@ -1,6 +1,6 @@
 package radar.spring.auth.common
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 /** Abstract Authorization validator interface to be used with a custom a token [T] for
  * validating incoming requests.

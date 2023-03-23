@@ -17,8 +17,9 @@ class ManagementPortalAuthorization : Authorization<RadarToken> {
         user: String?,
         source: String?
     ): Boolean {
-        val mpPermission = Permission(
-            Permission.Entity.valueOf(entity), Permission.Operation.valueOf(permission)
+        val mpPermission = Permission.of(
+            Permission.Entity.valueOf(entity),
+            Permission.Operation.valueOf(permission)
         )
         return when (permissionOn) {
             PermissionOn.PROJECT -> checkPermissionOnProject(token, mpPermission, project)
@@ -42,7 +43,9 @@ class ManagementPortalAuthorization : Authorization<RadarToken> {
             logger.warn("Project must be specified when checking a role.")
             return false
         }
-        return token.roles.getOrDefault(project, emptyList()).contains(role)
+        return token.roles.asSequence()
+            .filter { it.referent == project }
+            .any { it.authority == role }
     }
 
     override fun hasScopes(token: RadarToken, scopes: Array<String>): Boolean {
@@ -64,7 +67,6 @@ class ManagementPortalAuthorization : Authorization<RadarToken> {
         return grantTypes.contains(token.grantType)
     }
 
-
     private fun checkPermissionOnProject(
         token: RadarToken,
         mpPermission: Permission,
@@ -72,8 +74,7 @@ class ManagementPortalAuthorization : Authorization<RadarToken> {
     ): Boolean {
         if (project.isNullOrBlank()) {
             logger.warn(
-                "The project must be specified when checking " +
-                        "permissions on PROJECT."
+                "The project must be specified when checking permissions on PROJECT."
             )
             return false
         }
@@ -88,8 +89,7 @@ class ManagementPortalAuthorization : Authorization<RadarToken> {
     ): Boolean {
         if (project.isNullOrBlank() || user.isNullOrBlank()) {
             logger.warn(
-                "The project and subject must be specified when checking " +
-                        "permissions on SUBJECT."
+                "The project and subject must be specified when checking permissions on SUBJECT."
             )
             return false
         }
@@ -97,15 +97,16 @@ class ManagementPortalAuthorization : Authorization<RadarToken> {
     }
 
     private fun checkPermissionOnSource(
-        token: RadarToken, mpPermission: Permission, project:
-        String?,
+        token: RadarToken,
+        mpPermission: Permission,
+        project: String?,
         user: String?,
-        source: String?
+        source: String?,
     ): Boolean {
         if (project.isNullOrBlank() || user.isNullOrBlank() || source.isNullOrBlank()) {
             logger.warn(
-                "The project, subject and source must be specified when checking " +
-                        "permissions on SOURCE."
+                "The project, subject and source must be specified when checking permissions on " +
+                    "SOURCE."
             )
             return false
         }
