@@ -5,6 +5,8 @@ import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
 import org.aspectj.lang.reflect.CodeSignature
+import org.radarbase.auth.authorization.EntityDetails
+import org.radarbase.auth.authorization.entityDetails
 import org.slf4j.LoggerFactory
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
@@ -15,9 +17,11 @@ import radar.spring.auth.exception.ResourceForbiddenException
 open class AuthAspect<T> @JvmOverloads constructor(
     private val authValidator: AuthValidator<T>,
     private val authorization: Authorization<T>,
+    val organizationIdParamNames: Set<String> = setOf(ORGANIZATION_ID_PARAMETER_NAME),
     val projectIdParamNames: Set<String> = setOf(PROJECT_ID_PARAMETER_NAME),
     val subjectIdParamNames: Set<String> = setOf(SUBJECT_ID_PARAMETER_NAME),
-    val sourceIdParamNames: Set<String> = setOf(SOURCE_ID_PARAMETER_NAME)
+    val sourceIdParamNames: Set<String> = setOf(SOURCE_ID_PARAMETER_NAME),
+    val userIdParamNames: Set<String> = setOf(USER_ID_PARAMETER_NAME),
 ) {
 
     @Before("@annotation(authorized) && execution(* *(..))")
@@ -29,29 +33,32 @@ open class AuthAspect<T> @JvmOverloads constructor(
         val args = joinPoint.args
         val codeSignature = joinPoint.signature as CodeSignature
 
-        var projectId: String? = null
-        var subjectId: String? = null
-        var sourceId: String? = null
-
-        for ((index, arg) in args.withIndex()) {
-            if (codeSignature.parameterTypes[index] == String::class.java) {
-                when (codeSignature.parameterNames[index]) {
-                    in projectIdParamNames -> projectId = arg as String
-                    in subjectIdParamNames -> subjectId = arg as String
-                    in sourceIdParamNames -> sourceId = arg as String
+        val entity = entityDetails {
+            args.indices
+                .asSequence()
+                .filter { codeSignature.parameterTypes[it] == String::class.java }
+                .forEach { index ->
+                    when (codeSignature.parameterNames[index]) {
+                        in organizationIdParamNames -> organization = args[index] as String
+                        in projectIdParamNames -> project = args[index] as String
+                        in subjectIdParamNames -> subject = args[index] as String
+                        in sourceIdParamNames -> source = args[index] as String
+                        in userIdParamNames -> user = args[index] as String
+                    }
                 }
-            }
         }
-        authorize(authorized, req, projectId, subjectId, sourceId)
+        authorize(authorized, req, entity)
     }
 
     fun authorize(
         authorized: Authorized,
         request: HttpServletRequest,
-        projectId: String?,
-        subjectId: String?,
-        sourceId: String?
+        entity: EntityDetails,
     ) {
+        if (!authorized.enabled) {
+            return
+        }
+
         logger.debug("Authorizing request...")
         val token = ensureToken(request)
 
@@ -63,9 +70,7 @@ open class AuthAspect<T> @JvmOverloads constructor(
                 role = authorized.role,
                 scopes = authorized.scopes,
                 authorities = authorized.authorities,
-                user = subjectId,
-                project = projectId,
-                source = sourceId,
+                entity = entity,
                 grantTypes = authorized.grantTypes,
                 audiences = authorized.audiences
             )
@@ -115,9 +120,11 @@ open class AuthAspect<T> @JvmOverloads constructor(
 
     companion object {
         const val TOKEN_KEY = "radar_token"
+        const val ORGANIZATION_ID_PARAMETER_NAME = "organizationId"
         const val PROJECT_ID_PARAMETER_NAME = "projectId"
         const val SUBJECT_ID_PARAMETER_NAME = "subjectId"
         const val SOURCE_ID_PARAMETER_NAME = "sourceId"
+        const val USER_ID_PARAMETER_NAME = "userId"
         private val logger = LoggerFactory.getLogger(AuthAspect::class.java)
     }
 }

@@ -31,6 +31,7 @@ subprojects {
     repositories {
         mavenCentral()
         mavenLocal()
+        maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
     }
 
     // Ensure that dokka does not use vulnerable packages
