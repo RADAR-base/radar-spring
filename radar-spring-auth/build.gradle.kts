@@ -7,7 +7,7 @@ description = "This library provides functionality to add RADAR-base authorizati
 
 dependencies {
     val mpVersion: String by project
-    api(group = "org.radarbase", name = "radar-auth", version = "2.1.0")
+    api(group = "org.radarbase", name = "radar-auth", version = mpVersion)
 
     val slf4jVersion: String by project
     api(group = "org.slf4j", name = "slf4j-api", version = slf4jVersion)
