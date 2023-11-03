@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest
 import org.radarbase.auth.authentication.TokenValidator
 import org.radarbase.auth.authentication.TokenVerifierLoader
 import org.radarbase.auth.exception.TokenValidationException
+import org.radarbase.auth.jwks.JwkAlgorithmParser
 import org.radarbase.auth.jwks.JwksTokenVerifierLoader
 import org.radarbase.auth.token.RadarToken
 import org.slf4j.LoggerFactory
@@ -12,18 +13,23 @@ import org.springframework.stereotype.Component
 import radar.spring.auth.common.RadarAuthValidator
 import radar.spring.auth.config.ManagementPortalAuthProperties
 import java.net.URI
-import org.radarbase.auth.jwks.JwkAlgorithmParser
 
-/** The [radar.spring.auth.common.AuthValidator] for Management Portal tokens. **/
+/** The [radar.spring.auth.common.AuthValidator] for Management Portal tokens. */
 @Component
-class ManagementPortalAuthValidator @JvmOverloads constructor(
+class ManagementPortalAuthValidator
+@JvmOverloads
+constructor(
     @Autowired private val managementPortalProperties: ManagementPortalAuthProperties,
-    private val tokenVerifiers: List<TokenVerifierLoader> = listOf(URI(managementPortalProperties.publicKeyUrl))
-        .map { JwksTokenVerifierLoader(it.toString(), managementPortalProperties.resourceName, JwkAlgorithmParser()) },
+    private val tokenVerifiers: List<TokenVerifierLoader> =
+        listOf(URI(managementPortalProperties.publicKeyUrl)).map {
+            JwksTokenVerifierLoader(
+                it.toString(),
+                managementPortalProperties.resourceName,
+                JwkAlgorithmParser()
+            )
+        },
     private val tokenValidator: TokenValidator = TokenValidator(tokenVerifiers)
-) :
-    RadarAuthValidator {
-
+) : RadarAuthValidator {
     init {
         try {
             this.tokenValidator.refresh()
