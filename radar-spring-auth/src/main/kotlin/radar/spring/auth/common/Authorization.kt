@@ -29,7 +29,7 @@ interface Authorization<T> {
         }
     }
 
-    suspend fun hasPermission(
+    fun hasPermission(
         token: T,
         permission: String,
         entity: String,
