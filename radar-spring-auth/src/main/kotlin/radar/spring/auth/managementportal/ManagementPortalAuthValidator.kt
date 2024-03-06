@@ -16,43 +16,47 @@ import radar.spring.auth.config.ManagementPortalAuthProperties
 /** The [radar.spring.auth.common.AuthValidator] for Management Portal tokens. */
 @Component
 class ManagementPortalAuthValidator
-    @JvmOverloads
-    constructor(
-        @Autowired private val managementPortalProperties: ManagementPortalAuthProperties,
-        private val tokenVerifiers: List<TokenVerifierLoader> =
-            managementPortalProperties.publicKeyEndpoints.map {
-                JwksTokenVerifierLoader(it.toString(), managementPortalProperties.resourceName, JwkAlgorithmParser())
-            } +
-                listOf(
-                    JwksTokenVerifierLoader(
-                        managementPortalProperties.publicKeyUrl,
-                        managementPortalProperties.resourceName,
-                        JwkAlgorithmParser()
-                    )
-                ),
-        private val tokenValidator: TokenValidator = TokenValidator(tokenVerifiers)
-    ) : RadarAuthValidator {
-        init {
-            try {
-                this.tokenValidator.refresh()
-                logger.debug("Refreshed Token Validator keys")
-            } catch (ex: Exception) {
-                logger.error(
-                    "Failed to immediately initialize token validator, will try again later: {}",
-                    ex.toString()
+@JvmOverloads
+constructor(
+    @Autowired private val managementPortalProperties: ManagementPortalAuthProperties,
+    private val tokenVerifiers: List<TokenVerifierLoader> =
+        managementPortalProperties.publicKeyEndpoints.map {
+            JwksTokenVerifierLoader(
+                it.toString(),
+                managementPortalProperties.resourceName,
+                JwkAlgorithmParser()
+            )
+        } +
+            listOf(
+                JwksTokenVerifierLoader(
+                    managementPortalProperties.publicKeyUrl,
+                    managementPortalProperties.resourceName,
+                    JwkAlgorithmParser()
                 )
-            }
-        }
-
-        @Throws(TokenValidationException::class)
-        override fun verify(
-            token: String,
-            request: HttpServletRequest
-        ): RadarToken? {
-            return tokenValidator.validateBlocking(token)
-        }
-
-        companion object {
-            private val logger = LoggerFactory.getLogger(ManagementPortalAuthValidator::class.java)
+            ),
+    private val tokenValidator: TokenValidator = TokenValidator(tokenVerifiers)
+) : RadarAuthValidator {
+    init {
+        try {
+            this.tokenValidator.refresh()
+            logger.debug("Refreshed Token Validator keys")
+        } catch (ex: Exception) {
+            logger.error(
+                "Failed to immediately initialize token validator, will try again later: {}",
+                ex.toString()
+            )
         }
     }
+
+    @Throws(TokenValidationException::class)
+    override fun verify(
+        token: String,
+        request: HttpServletRequest
+    ): RadarToken? {
+        return tokenValidator.validateBlocking(token)
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(ManagementPortalAuthValidator::class.java)
+    }
+}
