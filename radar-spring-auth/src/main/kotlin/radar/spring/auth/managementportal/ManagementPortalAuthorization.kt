@@ -29,7 +29,7 @@ class ManagementPortalAuthorization() : Authorization<RadarToken> {
         source: String?
     ): Boolean {
         return runBlocking {
-            val subject = user.takeIf { it != null } ?: token.subject
+            val subject = user ?: token.subject
             val mpPermission =
                 Permission.of(
                     Permission.Entity.valueOf(entity),
