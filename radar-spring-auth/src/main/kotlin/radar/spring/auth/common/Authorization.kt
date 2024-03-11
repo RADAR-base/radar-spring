@@ -42,12 +42,8 @@ interface Authorization<T> {
     ): Boolean
 
     fun hasRole(token: T, project: String?, role: String?): Boolean
-
     fun hasScopes(token: T, scopes: Array<String>): Boolean
-
     fun hasAuthorities(token: T, authorities: Array<String>): Boolean
-
     fun hasAudiences(token: T, audiences: Array<String>): Boolean
-
     fun hasGrantTypes(token: T, grantTypes: Array<String>): Boolean
 }
