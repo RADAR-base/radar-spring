@@ -70,31 +70,19 @@ class ManagementPortalAuthorization() : Authorization<RadarToken> {
         }
     }
 
-    override fun hasScopes(
-        token: RadarToken,
-        scopes: Array<String>
-    ): Boolean {
+    override fun hasScopes(token: RadarToken, scopes: Array<String>): Boolean {
         return token.scopes.containsAll(scopes.toList())
     }
 
-    override fun hasAuthorities(
-        token: RadarToken,
-        authorities: Array<String>
-    ): Boolean {
+    override fun hasAuthorities(token: RadarToken, authorities: Array<String>): Boolean {
         return token.roles.asIterable().map { it.authority }.containsAll(authorities.toList())
     }
 
-    override fun hasAudiences(
-        token: RadarToken,
-        audiences: Array<String>
-    ): Boolean {
+    override fun hasAudiences(token: RadarToken, audiences: Array<String>): Boolean {
         return token.audience.containsAll(audiences.toList())
     }
 
-    override fun hasGrantTypes(
-        token: RadarToken,
-        grantTypes: Array<String>
-    ): Boolean {
+    override fun hasGrantTypes(token: RadarToken, grantTypes: Array<String>): Boolean {
         if (grantTypes.isEmpty()) {
             return true
         }
