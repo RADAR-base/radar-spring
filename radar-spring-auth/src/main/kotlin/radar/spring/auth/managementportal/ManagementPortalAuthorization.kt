@@ -11,13 +11,13 @@ import radar.spring.auth.common.Authorization
 import radar.spring.auth.common.PermissionOn
 
 class ManagementPortalAuthorization() : Authorization<RadarToken> {
-    private val DEFAULT_PROJECT = "main"
+    private val DEFAULT_ORG = "main"
     private val relationService =
         object : EntityRelationService {
             override suspend fun findOrganizationOfProject(project: String): String? {
                 // NOTE: This will default to the default "main" project for now since we are not using organizations
                 // TODO: Implement organizations
-                return DEFAULT_PROJECT
+                return DEFAULT_ORG
             }
         }
     val oracle: MPAuthorizationOracle = MPAuthorizationOracle(relationService)
