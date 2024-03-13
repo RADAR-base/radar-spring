@@ -47,12 +47,11 @@ class ManagementPortalAuthorization() : Authorization<RadarToken> {
                     checkPermissionOnSubject(token, mpPermission, project, subject)
                 PermissionOn.SOURCE ->
                     checkPermissionOnSource(token, mpPermission, project, subject, source)
-                PermissionOn.DEFAULT -> true
                 else ->
                     oracle.hasPermission(
                         token,
                         mpPermission,
-                        EntityDetails(project, subject, source)
+                        EntityDetails(project = project, subject = subject, source = source)
                     )
             }
         }
