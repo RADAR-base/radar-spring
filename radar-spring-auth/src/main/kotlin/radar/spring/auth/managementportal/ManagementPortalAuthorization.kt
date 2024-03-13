@@ -11,10 +11,13 @@ import radar.spring.auth.common.Authorization
 import radar.spring.auth.common.PermissionOn
 
 class ManagementPortalAuthorization() : Authorization<RadarToken> {
+    private val DEFAULT_ORG = "main"
     private val relationService =
         object : EntityRelationService {
             override suspend fun findOrganizationOfProject(project: String): String? {
-                return null
+                // NOTE: This will default to the default "main" project for now since we are not using organizations
+                // TODO: Implement organizations
+                return DEFAULT_ORG
             }
         }
     val oracle: MPAuthorizationOracle = MPAuthorizationOracle(relationService)
@@ -30,22 +33,25 @@ class ManagementPortalAuthorization() : Authorization<RadarToken> {
     ): Boolean {
         return runBlocking {
             val subject = user ?: token.subject
+            val project = project ?: token.roles?.firstOrNull()?.referent
+
             val mpPermission =
                 Permission.of(
                     Permission.Entity.valueOf(entity),
                     Permission.Operation.valueOf(permission)
                 )
             when (permissionOn) {
-                PermissionOn.PROJECT -> checkPermissionOnProject(token, mpPermission, project, subject)
-                PermissionOn.SUBJECT -> checkPermissionOnSubject(token, mpPermission, project, subject)
+                PermissionOn.PROJECT ->
+                    checkPermissionOnProject(token, mpPermission, project, subject)
+                PermissionOn.SUBJECT ->
+                    checkPermissionOnSubject(token, mpPermission, project, subject)
                 PermissionOn.SOURCE ->
                     checkPermissionOnSource(token, mpPermission, project, subject, source)
-                PermissionOn.DEFAULT -> true
                 else ->
                     oracle.hasPermission(
                         token,
                         mpPermission,
-                        EntityDetails(project, subject, source)
+                        EntityDetails(project = project, subject = subject, source = source)
                     )
             }
         }
@@ -68,24 +74,19 @@ class ManagementPortalAuthorization() : Authorization<RadarToken> {
         }
     }
 
-    override fun hasScopes(
-        token: RadarToken,
-        scopes: Array<String>
-    ): Boolean {
+    override fun hasScopes(token: RadarToken, scopes: Array<String>): Boolean {
         return token.scopes.containsAll(scopes.toList())
     }
 
-    override fun hasAudiences(
-        token: RadarToken,
-        audiences: Array<String>
-    ): Boolean {
+    override fun hasAuthorities(token: RadarToken, authorities: Array<String>): Boolean {
+        return token.roles.asIterable().map { it.authority }.containsAll(authorities.toList())
+    }
+
+    override fun hasAudiences(token: RadarToken, audiences: Array<String>): Boolean {
         return token.audience.containsAll(audiences.toList())
     }
 
-    override fun hasGrantTypes(
-        token: RadarToken,
-        grantTypes: Array<String>
-    ): Boolean {
+    override fun hasGrantTypes(token: RadarToken, grantTypes: Array<String>): Boolean {
         if (grantTypes.isEmpty()) {
             return true
         }
@@ -102,7 +103,11 @@ class ManagementPortalAuthorization() : Authorization<RadarToken> {
             logger.warn("The project must be specified when checking permissions on PROJECT.")
             return false
         }
-        return oracle.hasPermission(token, mpPermission, EntityDetails(subject = subject, project = project))
+        return oracle.hasPermission(
+            token,
+            mpPermission,
+            EntityDetails(subject = subject, project = project)
+        )
     }
 
     private suspend fun checkPermissionOnSubject(
@@ -117,7 +122,11 @@ class ManagementPortalAuthorization() : Authorization<RadarToken> {
             )
             return false
         }
-        return oracle.hasPermission(token, mpPermission, EntityDetails(subject = subject, project = project))
+        return oracle.hasPermission(
+            token,
+            mpPermission,
+            EntityDetails(subject = subject, project = project)
+        )
     }
 
     private suspend fun checkPermissionOnSource(
