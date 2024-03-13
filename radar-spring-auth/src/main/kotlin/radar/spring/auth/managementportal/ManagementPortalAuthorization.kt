@@ -15,6 +15,8 @@ class ManagementPortalAuthorization() : Authorization<RadarToken> {
     private val relationService =
         object : EntityRelationService {
             override suspend fun findOrganizationOfProject(project: String): String? {
+                // NOTE: This will default to the default "main" project for now since we are not using organizations
+                // TODO: Implement organizations
                 return DEFAULT_PROJECT
             }
         }
@@ -31,6 +33,8 @@ class ManagementPortalAuthorization() : Authorization<RadarToken> {
     ): Boolean {
         return runBlocking {
             val subject = user ?: token.subject
+            val project = project ?: token.roles?.firstOrNull()?.referent
+
             val mpPermission =
                 Permission.of(
                     Permission.Entity.valueOf(entity),
