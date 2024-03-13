@@ -1,10 +1,12 @@
 package radar.spring.auth.common
 
-/** Abstract Authorization interface to be used with a custom token [T].
- * See [radar.spring.auth.managementportal.ManagementPortalAuthorization]
- *  **/
-interface Authorization<T> {
+import kotlinx.coroutines.runBlocking
 
+/**
+ * Abstract Authorization interface to be used with a custom token [T]. See
+ * [radar.spring.auth.managementportal.ManagementPortalAuthorization]
+ */
+interface Authorization<T> {
     fun authorize(
         token: T,
         permission: String,
@@ -19,12 +21,14 @@ interface Authorization<T> {
         user: String? = null,
         source: String? = null
     ): Boolean {
-        return hasPermission(token, permission, entity, permissionOn, project, user, source) &&
-            hasRole(token, project, role) &&
-            hasScopes(token, scopes) &&
-            hasAuthorities(token, authorities) &&
-            hasAudiences(token, audiences) &&
-            hasGrantTypes(token, grantTypes)
+        return runBlocking {
+            hasPermission(token, permission, entity, permissionOn, project, user, source) &&
+                hasRole(token, project, role) &&
+                hasScopes(token, scopes) &&
+                hasAuthorities(token, authorities) &&
+                hasAudiences(token, audiences) &&
+                hasGrantTypes(token, grantTypes)
+        }
     }
 
     fun hasPermission(
